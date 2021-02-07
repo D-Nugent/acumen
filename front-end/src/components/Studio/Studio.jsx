@@ -1,10 +1,10 @@
 import React, {useState, useContext, useEffect, useRef} from 'react';
-import {videoRef,imageRef} from '../../firebase';
+import {videoRef} from '../../firebase';
 import {fireDB} from '../../firebase';
 import firebase from 'firebase/app';
 import {firebaseContext} from '../../provider/FirebaseProvider';
 import {v4 as uuidv4} from 'uuid';
-import {Link, useHistory} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import ProductionNav from '../../components/ProductionNav/ProductionNav';
 import addIcon from '../../assets/icons/add1.svg';
 // import addIconFocus from '../../assets/icons/add2.svg';
