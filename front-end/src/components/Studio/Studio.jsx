@@ -97,6 +97,8 @@ function Studio(props) {
         case firebase.storage.TaskState.RUNNING:
           console.log('Upload is running');
           break;
+        default:
+          console.log('Upload complete');
       }
     }, function(error) {
       console.error(error);
