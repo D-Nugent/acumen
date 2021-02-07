@@ -35,8 +35,8 @@ export class SignInModal extends Component {
     loginGoogle = () => {
         fireAuth.signInWithPopup(fireAuthGoogle)
         .then((result) => {
-            const credential = result.credential;
-            const token = credential.accessToken;
+            // const credential = result.credential;
+            // const token = credential.accessToken;
             const user = result.user;
             const addInfo = result.additionalUserInfo;
             addInfo.isNewUser === true &&
