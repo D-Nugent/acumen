@@ -181,7 +181,6 @@ function Studio(props) {
       mediaRecorder.onstop = ()=>{
         let blob = new Blob(chunks, {'type':'video/mp4;'});
         chunks = [];
-        let videoURL = window.URL.createObjectURL(blob);
         uploadVideoBlob(blob, videoId, videoInitTime, videoEndTime);
       };
     })

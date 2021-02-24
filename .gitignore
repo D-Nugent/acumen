@@ -3,6 +3,8 @@
 node_modules/
 *.eslintcache
 .eslintcache
+*.eslintcache~origin
+.eslintcache~origin
 
 # dependencies
 /node_modules
