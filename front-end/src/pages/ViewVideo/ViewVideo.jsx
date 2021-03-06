@@ -13,19 +13,12 @@ function ViewVideo (props) {
     const [bookmarkDetails, setBookmarkDetails] = useState(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [playStatus, setPlayStatus] = useState(false);
+    const [questionTimePrompts, setQuestionTimePrompts] = useState([])
     const [selectedUser] = useState({
       user: dataLoad.userData,
       selectedVideo: dataLoad.userData.userUploads.filter(video => video.videoId===props.match.params.videoid).shift(),
       loaded: true,
     })
-    
-    // useEffect(() => {
-    //   setSelectedUser({
-    //     user: dataLoad.userData,
-    //     selectedVideo: dataLoad.userData.userUploads.filter(video => video.videoId===props.match.params.videoid).shift(),
-    //     loaded: true,
-    //   })
-    // }, [])
 
     useEffect(() => {
       function check() {
@@ -44,7 +37,6 @@ function ViewVideo (props) {
     /* #ToDo - Review potential of having Bookmarks in fullscreen mode.*/
 
     const activateQR = () => {
-
       new QrCodeWithLogo({
         canvas: document.querySelector('.viewvideo__main-questions-share-qr-code'),
         content: window.location.href,
@@ -68,8 +60,16 @@ function ViewVideo (props) {
           borderColor: "#FFFFFF",
         }
       }).toCanvas().then(()=>{})
-
     }
+
+    useEffect(() => {
+      let videoStartTime = selectedUser.selectedVideo.videoInitTime;
+      setQuestionTimePrompts(
+        selectedUser.selectedVideo.videoQuestions.map(question => {
+          return Math.floor((question.qInit - videoStartTime)/1000);
+        })
+      )
+    }, [selectedUser.selectedVideo.videoInitTime, selectedUser.selectedVideo.videoQuestions])
 
     useEffect(() => {
       new ClipboardJS('.viewvideo__main-questions-share-qr-buttons-copy');
@@ -83,32 +83,48 @@ function ViewVideo (props) {
       let seconds = Math.floor((duration / 1000) % 60),
       minutes = Math.floor((duration / (1000 * 60)) % 60),
       hours = Math.floor((duration / (1000 * 60 * 60)) % 24);
-  
       hours = (hours < 10) ? `0${hours}` : hours;
       minutes = (minutes <10) ? `0${minutes}` : minutes;
       seconds = (seconds <10) ? `0${seconds}` : seconds;
       return hours==="00"?minutes==="00"?`${seconds}s`:`${minutes}:${seconds}`:`${hours}:${minutes}:${seconds}`
     }
 
-    const bookmarkJump = (bookmarkTime, bookmarkDet) => {
+    console.log(selectedUser.selectedVideo);
+    console.log(questionTimePrompts);
+
+    useEffect(()=> {
+      const bookmarkDisplay = (questionIndex) => {
+        const video = document.querySelector('.viewvideo__main-container-wrapper-player');
+        video.pause();
+        setBookmarkDetails(selectedUser.selectedVideo.videoQuestions[questionIndex].detail);
+        setTimeout(() => {
+          video.play();
+        }, 1600);
+        setTimeout(() => {
+          setBookmarkDetails(null)
+        }, 4000);
+      }
+
+      if (playStatus===true){
+          const video = document.querySelector('.viewvideo__main-container-wrapper-player');
+          setInterval(() => {
+            let questionIndexVal = questionTimePrompts.indexOf(Math.floor(video.currentTime))
+            if (questionIndexVal !== -1) {
+              bookmarkDisplay(questionIndexVal)
+            }
+          }, 800);
+        }
+      },[playStatus, questionTimePrompts, selectedUser.selectedVideo.videoQuestions])
+      
+
+    const bookmarkJump = (bookmarkTime) => {
       if (bookmarkTime){
         const video = document.querySelector('.viewvideo__main-container-wrapper-player');
         let timeSkip = (bookmarkTime - selectedUser.selectedVideo.videoInitTime)/1000;
         video.currentTime = timeSkip;
-        video.pause();
-        setBookmarkDetails(bookmarkDet);
-        setTimeout(()=> {
-          video.play();
-        }, 2000)
-        setTimeout(() => {
-          setBookmarkDetails(null);
-        }, 4000);
       }
     }
 
-    console.log(selectedUser);
-    console.log(props);
-    console.log(selectedUser.selectedVideo);
     if(selectedUser.loaded===false){
       return (
       <PageLoading/>
@@ -181,11 +197,10 @@ function ViewVideo (props) {
             </div>
             )
          })}
-         {playStatus===true&&
           <div className="viewvideo__main-questions-share">
             <h2 className="viewvideo__main-questions-share-heading">Want To Share This Profile?</h2>
             <p className="viewvideo__main-questions-share-desc">
-              Easily share this candidate by copying the below QR code and/or link anywhere you like!
+              Easily share this digital resume by copying the below QR code and/or link anywhere you like!
             </p>
             <div className="viewvideo__main-questions-share-qr">
               <canvas className="viewvideo__main-questions-share-qr-code" onLoad={()=>{activateQR()}}></canvas>
@@ -201,7 +216,6 @@ ${new Date().getHours()<12?"Good Morning":new Date().getHours()<18?"Good Afterno
               </div>
             </div>
           </div>
-        }
           </div>
         </div>
       </div>
