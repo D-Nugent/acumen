@@ -60,9 +60,20 @@ function FirebaseProvider(props) {
     //     unsubscribe()
     // }
 
+    function dataCall (userId) {
+        return new Promise (resolve => {
+            const dataValue = fireDB.collection("usersTwo").doc(userId).get()
+            .then((doc)=> {
+                return doc.data();
+            }).catch((error) => {
+                console.error("Error getting document:", error);
+            })
+            resolve(dataValue);
+        })
+    }
 
     return (
-        <firebaseContext.Provider value={{user,dataLoad,dataUpdate,processSignOut,updateEmailAddress}}>
+        <firebaseContext.Provider value={{user,dataLoad,dataUpdate,processSignOut,updateEmailAddress, dataCall}}>
             {props.children}
         </firebaseContext.Provider>
     )

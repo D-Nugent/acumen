@@ -8,26 +8,53 @@ import acumenLogo from '../../assets/logos/acumenLogoSmall.svg';
 import './ViewVideo.scss'
 
 function ViewVideo (props) {
-    const {user, dataLoad} = useContext(firebaseContext);
+    const {user, dataLoad, dataCall} = useContext(firebaseContext);
     const [interviewStage] = useState("review");
     const [bookmarkDetails, setBookmarkDetails] = useState(null);
     const [fullscreen, setFullscreen] = useState(false);
     const [playStatus, setPlayStatus] = useState(false);
     const [questionTimePrompts, setQuestionTimePrompts] = useState([])
-    const [selectedUser] = useState({
-      user: dataLoad.userData,
-      selectedVideo: dataLoad.userData.userUploads.filter(video => video.videoId===props.match.params.videoid).shift(),
-      loaded: true,
-    })
+    const [visitorData, setVisitorData] = useState({loaded:false, userData:null})
+    const [selectedUser, setSelectedUser] = useState({
+          user: null,
+          selectedVideo: [],
+          loaded: false,
+        })
+
+    useEffect(() => {
+      if (user===null||user.uid!==props.match.params.userid) {
+        dataCall(props.match.params.userid).then(user => {
+          setVisitorData({
+            loaded: true,
+            userData: user,
+            selectedVideo: user.userUploads.filter(video => video.videoId===props.match.params.videoid).shift(),
+          });
+        })
+      } else {
+        setSelectedUser({
+          user: dataLoad.userData,
+          selectedVideo: dataLoad.userData.userUploads.filter(video => video.videoId===props.match.params.videoid).shift(),
+          loaded: true,
+        });
+      }
+    }, [dataCall, props.match.params.userid, props.match.params.videoid, user, dataLoad.userData])
+
+    useEffect(() => {
+      if (visitorData.userData!==null){
+        setSelectedUser({
+          user: visitorData.userData,
+          selectedVideo: visitorData.selectedVideo,
+          loaded: true,
+        })
+      }
+    }, [visitorData])
 
     useEffect(() => {
       function check() {
         if (!window.screenTop && !window.screenY) {
            setFullscreen(false);
-           console.log("false");
         } else {
           setFullscreen(true);
-          console.log("true");
         }
     }
       ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "msfullscreenchange"].forEach(
@@ -37,18 +64,19 @@ function ViewVideo (props) {
     /* #ToDo - Review potential of having Bookmarks in fullscreen mode.*/
 
     const activateQR = () => {
-      new QrCodeWithLogo({
-        canvas: document.querySelector('.viewvideo__main-questions-share-qr-code'),
-        content: window.location.href,
-        width: 96,
-        logo: {
-          src: acumenLogo,
-          logoSize: .6,
-          borderRadius: 24,
-          borderColor: "#FFFFFF00",
+      setTimeout(() => {
+        new QrCodeWithLogo({
+          canvas: document.querySelector('.viewvideo__main-questions-share-qr-code'),
+          content: window.location.href,
+          width: 96,
+          logo: {
+            src: acumenLogo,
+            logoSize: .6,
+            borderRadius: 24,
+            borderColor: "#FFFFFF00",
         }
       }).toCanvas().then(()=>{})
-
+      
       new QrCodeWithLogo({
         canvas: document.querySelector('.viewvideo__main-questions-share-qr-code-alt2'),
         content: window.location.href,
@@ -60,24 +88,24 @@ function ViewVideo (props) {
           borderColor: "#FFFFFF",
         }
       }).toCanvas().then(()=>{})
+
+    }, 0);
     }
 
     useEffect(() => {
-      let videoStartTime = selectedUser.selectedVideo.videoInitTime;
-      setQuestionTimePrompts(
-        selectedUser.selectedVideo.videoQuestions.map(question => {
-          return Math.floor((question.qInit - videoStartTime)/1000);
-        })
-      )
-    }, [selectedUser.selectedVideo.videoInitTime, selectedUser.selectedVideo.videoQuestions])
+      if (selectedUser.user !== null){
+        let videoStartTime = selectedUser.selectedVideo.videoInitTime;
+        setQuestionTimePrompts(
+          selectedUser.selectedVideo.videoQuestions.map(question => {
+            return Math.floor((question.qInit - videoStartTime)/1000);
+          })
+        )
+      }
+    },[selectedUser])
 
     useEffect(() => {
       new ClipboardJS('.viewvideo__main-questions-share-qr-buttons-copy');
     }, [])
-    
-    useEffect(()=> {
-      activateQR();
-    },[playStatus])
 
     const videoDurationCalc = (duration)=> {
       let seconds = Math.floor((duration / 1000) % 60),
@@ -88,9 +116,6 @@ function ViewVideo (props) {
       seconds = (seconds <10) ? `0${seconds}` : seconds;
       return hours==="00"?minutes==="00"?`${seconds}s`:`${minutes}:${seconds}`:`${hours}:${minutes}:${seconds}`
     }
-
-    console.log(selectedUser.selectedVideo);
-    console.log(questionTimePrompts);
 
     useEffect(()=> {
       const bookmarkDisplay = (questionIndex) => {
@@ -124,6 +149,7 @@ function ViewVideo (props) {
         video.currentTime = timeSkip;
       }
     }
+    
 
     if(selectedUser.loaded===false){
       return (
@@ -131,7 +157,7 @@ function ViewVideo (props) {
       )
     } else {
     return (
-      <div className="viewvideo">
+      <div className="viewvideo" onLoad={activateQR()}>
         <div className="viewvideo__overview">
           <div className="viewvideo__overview-border"></div>
           <h2 className="viewvideo__overview-heading">
@@ -141,7 +167,7 @@ function ViewVideo (props) {
         </div>
         <div className="viewvideo__main">
           <div className="viewvideo__main-container">
-            {user.uid === props.match.params.userid &&
+            {(user===null||user.uid!==props.match.params.userid) &&
             <ProductionNav stage={interviewStage}/>
             }
             <div className="viewvideo__main-container-wrapper">
@@ -153,7 +179,7 @@ function ViewVideo (props) {
               </div>
               }
             </div>
-            {user.uid === props.match.params.userid &&
+            {(user && user.uid === props.match.params.userid) &&
             <div className="viewvideo__main-container-redo">
               <h4 className="viewvideo__main-container-redo-heading">What do you think?</h4>
               <p className="viewvideo__main-container-redo-desc">
@@ -203,13 +229,13 @@ function ViewVideo (props) {
               Easily share this digital resume by copying the below QR code and/or link anywhere you like!
             </p>
             <div className="viewvideo__main-questions-share-qr">
-              <canvas className="viewvideo__main-questions-share-qr-code" onLoad={()=>{activateQR()}}></canvas>
-              <canvas className="viewvideo__main-questions-share-qr-code-alt2" onLoad={()=>{activateQR()}}></canvas>
+              <canvas className="viewvideo__main-questions-share-qr-code"></canvas>
+              <canvas className="viewvideo__main-questions-share-qr-code-alt2"></canvas>
               <div className="viewvideo__main-questions-share-qr-buttons">
                 <button data-clipboard-text={window.location.href} className="viewvideo__main-questions-share-qr-buttons-copy">
-                  Copy Digital Resume Link
+                  Copy Resume Link
                 </button>
-                <a className="viewvideo__main-questions-share-qr-buttons-email" href={`mailto:?subject=Great Candidate - ${selectedUser.firstName} ${selectedUser.lastName}&body=
+                <a className="viewvideo__main-questions-share-qr-buttons-email" href={`mailto:?subject=Great Candidate - ${selectedUser.user.firstName} ${selectedUser.user.lastName}&body=
 ${new Date().getHours()<12?"Good Morning":new Date().getHours()<18?"Good Afternoon":"Good Evening"},%0D%0A%0D%0AI found this great candidate on Acumen and thought you might want to review their profile:%0D%0A${window.location.href}%0D%0A%0D%0AKind Regards,%0D%0A`}>
                   Share by Email
                 </a>

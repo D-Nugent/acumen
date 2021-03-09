@@ -35,21 +35,14 @@ function App () {
                   <Route render={(routeProps) => <SideNav {...routeProps}/>}/>
                 <Switch>
                   <Route exact path="/" render={(routeProps) => <Landing {...routeProps} />} />
-                  {/* <Route exact path="/user/:userid/createProfile" render={(routeProps) => <ModifyProfile {...routeProps} />} /> */}
-                  {/* <Route exact path="/user/:userid/editProfile" render={(routeProps) => <ModifyProfile {...routeProps} />} /> */}
                   <Route exact path="/user/:userid/newVideo" render={(routeProps) => <NewVideo {...routeProps} />} />
                   <Route exact path="/user/:userid/:videoid" render={(routeProps) => <ViewVideo {...routeProps} />} />
-                
-                  {/* <Route exact path="/business/:businessid/createProfile" render={(routeProps) => <ModifyProfile {...routeProps} />} /> */}
-                  {/* <Route exact path="/business/:businessid/editProfile" render={(routeProps) => <ModifyProfile {...routeProps} />} /> */}
                   <Route exact path="/business/:businessid/newEnv" render={(routeProps) => <NewEnv {...routeProps} />} />
-
                   <Route exact path="/business/:businessid/:envId/candidates" render={(routeProps) => <CandidateReel {...routeProps} />} />
                   <Route exact path="/business/:businessid/:envId/candidates/:userid" render={(routeProps) => <CandidateProfile {...routeProps} />} />
                 </Switch>
               {/* ------------------------------------------------------ */}
                 <Switch>
-                  {/* <Route exact path="/" render={(routeProps) => <Landing {...routeProps} />} /> */}
                   <Route exact path="/about" render={(routeProps) => <About {...routeProps} />} />
                 </Switch>
               {/* ------------------------------------------------------ */}
