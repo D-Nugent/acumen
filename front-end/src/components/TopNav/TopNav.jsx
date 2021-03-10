@@ -24,7 +24,7 @@ function TopNav(props){
     }
     
     return (
-        <div className={`topnav${props.location.pathname!=="/"?" --launch":""}`}>
+        <header className={`topnav${props.location.pathname!=="/"?" --launch":""}`}>
             <div className="topnav__account">
                 <img src={AcumenLogo} alt="logo" className="topnav__account-logo"/>
                 <h4 className={`topnav__account-heading${props.location.pathname!=="/"?" --launch":""}`}>Hi there
@@ -38,7 +38,7 @@ function TopNav(props){
                 }
                 {loginModal===true && <SignInModal loginModalClose={loginModalClose}/>}
             </div>
-            <div className="topnav__navigation">
+            <nav className="topnav__navigation">
                 <NavLink exact to="/" 
                 className={`topnav__navigation-link${props.location.pathname!=="/"?" --launch":""}`} 
                 activeClassName="--active">Home</NavLink>
@@ -72,8 +72,8 @@ function TopNav(props){
                 <NavLink exact to="/about" 
                 className={`topnav__navigation-link${props.location.pathname!=="/"?" --launch":""}`} 
                 activeClassName="--active">About</NavLink>
-            </div>
-        </div>
+            </nav>
+        </header>
     )
 }
 

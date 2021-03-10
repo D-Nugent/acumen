@@ -213,16 +213,18 @@ function ViewVideo (props) {
             </p>
             </>
             }
+            <div className="viewvideo__main-questions-wrapper">
           {selectedUser.selectedVideo.videoQuestions.map((question,index) => {
            return (
             <div className={`viewvideo__main-questions-prompt${fullscreen===true?" --fullscreen":""}`}
             onClick={()=>{bookmarkJump(question.qInit,question.detail)}} key={question.id}>
-              <h4 className="viewvideo__main-questions-prompt-number">0{index+1}</h4>
+              <h4 className="viewvideo__main-questions-prompt-number">{index<9?'0':''}{index+1}</h4>
               <p className="viewvideo__main-questions-prompt-question">{question.detail}</p>
               <p className="viewvideo__main-questions-prompt-bookmark">{!question.qInit?"No bookmark":videoDurationCalc(question.qInit - selectedUser.selectedVideo.videoInitTime)}</p>
             </div>
             )
          })}
+            </div>
           <div className="viewvideo__main-questions-share">
             <h2 className="viewvideo__main-questions-share-heading">Want To Share This Profile?</h2>
             <p className="viewvideo__main-questions-share-desc">

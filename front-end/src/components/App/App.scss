@@ -3,13 +3,10 @@
 .app{
     height: fit-content;
 
-    &__topnav{
-
-    }
     &__main{
         display: flex;
-        height: 95vh;
-        align-items: center;
-    // background-color: $themeSlatePrimary;
+        height: fit-content;
+        min-height: 95vh;
+        // align-items: center;
     }
 }
