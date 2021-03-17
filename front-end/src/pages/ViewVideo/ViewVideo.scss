@@ -132,7 +132,7 @@
         max-height: 300px;
         width: 100%;
         padding: 0 7px;
-        overflow-y: scroll;
+        overflow-y: auto;
         scrollbar-color: $themeSlateContrastTertiary;
 
         &::-webkit-scrollbar {

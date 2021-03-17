@@ -17,9 +17,17 @@ function ViewVideo (props) {
     const [visitorData, setVisitorData] = useState({loaded:false, userData:null})
     const [selectedUser, setSelectedUser] = useState({
           user: null,
-          selectedVideo: [],
+          selectedVideo: {
+            title: '',
+            videoEndTime: null,
+            videoId: '',
+            videoInittime: null,
+            videoQuestions: [],
+            videoSrc: '',
+          },
           loaded: false,
         })
+
 
     useEffect(() => {
       if (user===null||user.uid!==props.match.params.userid) {
