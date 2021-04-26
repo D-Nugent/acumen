@@ -7,16 +7,40 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 5vw 10vw;
 
-    &__container{
+    &__heading{
+        color: $themeSlateContrastTertiary
+    }
 
-        &-heading{
-            color: $themeSlateContrastTertiary
+    &__details-wrapper{
+        display: flex;
+        flex-direction: column;
+
+        @include tablet-adapt{
+            flex-direction: row;
+        }
+    }
+
+    &__text{
+        padding-bottom: 2vw;
+
+        @include tablet-adapt{
+            padding-right: 2vw;
         }
     }
 
     &__emph {
         color: $themeSlateContrastTertiary;
         font-weight: 800;
+    }
+
+    &__demo-video{
+        width: 100%;
+        max-width: 500px;
+    }
+
+    &__features-list{
+        padding-left: 20px;
     }
 }

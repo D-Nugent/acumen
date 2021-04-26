@@ -28,7 +28,7 @@ function Landing () {
                         noun: acumen - <span className="landing__emph">the future of recruitment, a modernisation of the paper resume
                         to an immersive video interview.</span>
                     </h2>
-                    <Link to="/how" className="landing__container-details-learn">
+                    <Link to="/about" className="landing__container-details-learn">
                         Learn More
                         <img src={chevron} alt="chevron black" className="landing__container-details-learn-icon"/>
                         <img src={chevron} alt="chevron black" className="landing__container-details-learn-icon-focus"/>
