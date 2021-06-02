@@ -24,7 +24,7 @@ function Studio(props) {
     videoEndTime: null,
     videoQuestions: [],
   });
-  const currentQuestions = useRef();
+  const currentQuestions = ();
   currentQuestions.current = videoData.videoQuestions;
   const {user, dataLoad, dataUpdate} = useContext(firebaseContext);
   const [interviewStage,setInterviewStage] = useState("setup");
