@@ -8,7 +8,7 @@ import {firebaseContext} from '../../provider/FirebaseProvider';
 
 function TopNav(props){
     const [loginModal, setLoginModal] = useState(false);
-    const {processSignOut, dataLoad, user} = useContext(firebaseContext);
+    const {authControl, dataLoad, user} = useContext(firebaseContext);
     
     const loginModalClose = (isNewUser) => {
         setLoginModal(false);
@@ -17,7 +17,7 @@ function TopNav(props){
     const userSignOut = () => {
         fireAuth.signOut().then(()=>{
             console.log("User has been signed Out");
-            processSignOut()
+            authControl.processSignOut()
         }).catch((error) => {
             console.error(error);
         })
