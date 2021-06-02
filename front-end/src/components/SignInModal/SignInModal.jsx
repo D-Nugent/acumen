@@ -1,6 +1,5 @@
-import React, { Component } from 'react';
-import {fireAuth, fireDB, fireAuthGoogle} from '../../firebase';
-import firebase from 'firebase/app';
+import React, { useState,useContext } from 'react';
+import {firebaseContext} from '../../provider/FirebaseProvider';
 import ActionClose from '../ActionClose/ActionClose';
 import googleIcon from '../../assets/icons/btn_google.svg';
 import linkedinIcon from '../../assets/icons/btn_linkedIn.svg';
@@ -8,254 +7,144 @@ import passHidIcon from '../../assets/icons/visibility_off.svg';
 import passVisIcon from '../../assets/icons/visibility.svg';
 import './SignInModal.scss';
 
-export class SignInModal extends Component {
-    state = {
-        modalState: "login",
-        passVisible: false,
-        passVal: true,
-        accountType: "user",
-    }
-
-    loginUser = (event) => {
-        event.preventDefault();
-        const userEmail = event.target.emailRef.value;
-        const userPass = event.target.passRef.value;
-        fireAuth.signInWithEmailAndPassword(userEmail, userPass)
-        .then((userCredential) => {
-            console.log("Successful Sign In");
-            this.props.loginModalClose(userCredential.additionalUserInfo.isNewUser)
-        })
-        .catch((error) => {
-            const errorCode = error.code;
-            const errorMessage = error.message;
-            console.log(`${errorCode}, ${errorMessage}`);
+function SignInModal({loginModalClose}) {
+    const [modalState,setModalState] = useState('login');
+    const [accountType,setAccountType] = useState('user');
+    const [passState,setPassState] = useState({passVisible:false,passVal:true})
+    const {authControl,authAdmin} = useContext(firebaseContext)
+    
+    const loginUser = event => {
+        authControl.signInWithEmail(event)
+        .then(isNewUser => {
+            loginModalClose(isNewUser);
         })
     }
 
-    loginGoogle = () => {
-        fireAuth.signInWithPopup(fireAuthGoogle)
-        .then((result) => {
-            // const credential = result.credential;
-            // const token = credential.accessToken;
-            const user = result.user;
-            const addInfo = result.additionalUserInfo;
-            addInfo.isNewUser === true &&
-            fireDB.collection("usersTwo").doc(user.uid).set({
-                firstName: addInfo.profile.given_name,
-                lastName: addInfo.profile.family_name,
-                profile: {
-                    email: user.email,
-                    phone: '',
-                    aboutMe: '',
-                    experience:[],
-                },
-                profileImageSrc:{
-                    blob: addInfo.profile.picture, 
-                },
-                accountCreated: firebase.firestore.Timestamp.now(),
-                membershipTier: "Basic",
-                userUploads: {
-                    init: false,
-                }
-            });
-            this.props.loginModalClose(addInfo.isNewUser)
-        }).catch((error) => {
-            console.log(error);
-        })        
-    }
-
-    // <button className="topnav__signin-anon" onClick={async () => {
-    //     await firebase.app().auth().signInAnonymously();
-    //     this.setState({isLoading: false});
-    //     }}>
-    //     Sign in anonymously
-    //     </button>
-/* #ToDo - Add anonymous at a later date for employers who are viewing candidate profiles. */
-
-    registerUser = (event) => {
-        event.preventDefault();
-            const userEmail = event.target.emailRef.value;
-            const userPass = event.target.passRef.value;
-        fireAuth.createUserWithEmailAndPassword(userEmail, userPass)
-        .then((userCredential) => {
-            const user = userCredential.user;
-            console.log(userCredential);
-            console.log(user);
-            if (this.state.accountType === "user") {
-                const userFirstName = event.target.firstNameRef.value
-                const userLastName = event.target.lastNameRef.value
-                fireDB.collection("usersTwo").doc(user.uid).set({
-                    firstName: userFirstName,
-                    lastName: userLastName,
-                    profile: {
-                        email: user.email,
-                        phone: '',
-                        aboutMe:'',
-                        experience:[],
-                    },
-                    profileImageSrc:{
-                        blob: "", 
-                    },
-                    accountCreated: firebase.firestore.Timestamp.now(),
-                    membershipTier: "Basic",
-                    userUploads: {
-                        init: false,
-                    }
-                })
-                .then(this.props.loginModalClose(userCredential.additionalUserInfo.isNewUser))
-            } else {
-            const userCompanyName = event.target.companyRef.value
-                fireDB.collection("businessesTwo").doc(user.uid).set({
-                    companyName: userCompanyName,
-                    profile: {
-                        email: user.email,
-                        companyBio: "We're new to Acumen, watch this space!"
-                    },
-                    accountCreated: firebase.firestore.Timestamp.now(),
-                    membershipTier: "Basic",
-                    interviewEnvironments: []
-                })
-                .then(this.props.loginModalClose(userCredential.additionalUserInfo.isNewUser))
-            }
-        })
-        .catch((error) => {
-            switch (error.code) {
-                case 'auth/email-already-in-use':
-                  console.error(`Email address ${userEmail} already in use.`);
-                  break;
-                case 'auth/invalid-email':
-                  console.error(`Email address ${userEmail} is invalid.`);
-                  break;
-                case 'auth/operation-not-allowed':
-                  console.error(`Error during sign up.`);
-                  break;
-                case 'auth/weak-password':
-                  console.error('Password is not strong enough. Add additional characters including special characters and numbers.');
-                  break;
-                default:
-                  console.error(error.message);
-                  break;
-              }
+    const loginGoogle = () => {
+        authControl.signInWithGoogle()
+        .then(isNewUser => {
+            loginModalClose(isNewUser);
         })
     }
 
-    sendPassReset = (event) => {
-        event.preventDefault();
-        fireAuth.sendPasswordResetEmail(event.target.emailRef.value)
-        .then(()=> {
-            window.alert("A password reset email has been sent to you")
-        })
-        .catch((error) => {
-            window.alert(error)
+    const registerUser = (event,accountType) => {
+        authControl.regiserUserWithEmail(event,accountType)
+        .then(isNewUser => {
+            loginModalClose(isNewUser);
         })
     }
 
-    passwordValidation = () => {
-        document.querySelector('#passRef').value !== document.querySelector('#confirmPassRef').value?
-        this.setState({
-            passVal: false
-        })
-        :
-        this.setState({
-            passVal: true
+    const passwordValidation = () => {
+        setPassState({
+            ...passState,
+            passVal: document.querySelector('#passRef').value === document.querySelector('#confirmPassRef').value
         })
     }
 
-    toggleAccountType = () => {
-        this.state.accountType === "user"?
-        this.setState({accountType:"business"})
-        :this.setState({accountType:"user"})
+    const toggleAccountType = () => {
+        accountType === "user"?
+        setAccountType("business"):setAccountType("user")
     }
 
-    render() {
-        return (
-            <div className="account">
-                <div className="account__container">
-                    <div className="account__container-close" onClick={()=>{this.props.loginModalClose()}}>
-                        <ActionClose/>
-                    </div>
-                    <h2 className="account__container-heading">
-                        {this.state.modalState==="login"?"Let's get you signed in":
-                        this.state.modalState==="register"?"Let's get you signed up":"Let's reset that password"}
-                    </h2>
-                    {this.state.modalState==="register" &&
-                    <div className="account__container-type" onClick={()=>{this.toggleAccountType()}}>
-                        <div className={`account__container-type-toggle${this.state.accountType==="user"?"--active":""}`}>User</div>
-                        <div className={`account__container-type-toggle${this.state.accountType==="business"?"--active":""}`}>Business</div>
-                    </div>
-                    }
-                    <form className="account__container-form" onSubmit={(event)=>{
-                        this.state.passVal !==false &&
-                        this.state.modalState==="login"?this.loginUser(event):
-                        this.state.modalState==="register"?this.registerUser(event):this.sendPassReset(event)
-                    }}>
-                        {this.state.modalState==="register" &&
-                            <>
-                            {this.state.accountType==="user"?
-                                <>
-                                    <input type="text" className="account__container-form-field" id="firstNameRef" required placeholder="First Name"/>
-                                    <input type="text" className="account__container-form-field" id="lastNameRef" required placeholder="Last Name"/>
-                                </>
-                            :
-                            <input type="text" className="account__container-form-field" id="companyRef" required placeholder="Company Name"/>
-                            }
-                            </>
-                        }
-                        <input type="email" className="account__container-form-field" id="emailRef" required placeholder="Email"/>
-                        {this.state.modalState!=="reset" &&
-                            <div className="account__container-form-passcontainer">
-                                <input type={this.state.passVisible===false?"password":"text"} className="account__container-form-field"
-                                    id="passRef" required placeholder="Password"
-                                    onKeyUp={()=>{this.state.modalState!=="login" && this.passwordValidation()}}/>
-                                <img src={this.state.passVisible===false?passHidIcon:passVisIcon} className="account__container-form-passvis" alt="password visibility toggle"
-                                    onMouseDown={()=>{this.setState({passVisible: true})}}
-                                    onMouseUp={()=>{this.setState({passVisible: false})}}/>
-                            </div>
-                        }
-                        {this.state.modalState==="register" &&
-                            <div className="account__container-form-passcontainer">
-                                <input type={this.state.passVisible===false?"password":"text"} className="account__container-form-field"
-                                    id="confirmPassRef" required placeholder="Confirm Password"
-                                    onKeyUp={()=> {this.passwordValidation()}}/>
-                                <img src={this.state.passVisible===false?passHidIcon:passVisIcon} className="account__container-form-passvis" alt="password visibility toggle" 
-                                    onMouseDown={()=>{this.setState({passVisible: true})}}
-                                    onMouseUp={()=>{this.setState({passVisible: false})}}/>
-                                {this.state.passVal===false && <p className="account__container-form-passval">Sorry, your passwords don't match.</p>}
-                            </div>
-                        }
-                        <button type="submit" className="account__container-form-submit">{this.state.modalState==="login"?"Sign In":this.state.modalState==="register"?"Sign Up":"Request Reset Email"}</button>
-                    </form>
-                    <div className="account__container-redirect">
-                        {this.state.modalState==="login" && 
-                        <p className="account__container-redirect-forgot" onClick={()=>{this.setState({modalState:"reset"})}}>Forgot your password?</p>}
-                        <p className="account__container-redirect-register" 
-                            onClick={()=>{this.state.modalState==="login"?
-                            this.setState({modalState:"register"}):this.setState({modalState:"login", passVal:true, accountType:"user"})}}
-                        >
-                            {this.state.modalState==="login"?
-                            "Not a member yet?":this.state.modalState==="reset"?"Return to login":"Already a member?"}
-                        </p>
-                    </div>
-                    {this.state.modalState!=="reset" &&
-                    <>
-                    {this.state.accountType!=="business" &&
-                    <>
-                        <div className="account__container-or">
-                            <hr/><span>OR</span><hr/>
-                        </div>
-                        <h4 className="account__container-alt">Continue with:</h4>
-                        <div className="account__container-providers">
-                            <img src={googleIcon} onClick={()=>{this.loginGoogle()}} alt="login with google button"/>
-                            <img src={linkedinIcon} onClick={()=>{this.loginGoogle()}} alt="login with linkedIn button"/>
-                        </div>
-                    </>
-                    }
-                    </>
-                    }
+    return (
+        <div className="account">
+            <div className="account__container">
+                <div className="account__container-close" onClick={()=>{loginModalClose()}}>
+                    <ActionClose/>
                 </div>
+                <h2 className="account__container-heading">
+                    {modalState==="login"?"Let's get you signed in":
+                    modalState==="register"?"Let's get you signed up":"Let's reset that password"}
+                </h2>
+                {modalState==="register" &&
+                <div className="account__container-type" onClick={()=>{toggleAccountType()}}>
+                    <div className={`account__container-type-toggle${accountType==="user"?"--active":""}`}>User</div>
+                    <div className={`account__container-type-toggle${accountType==="business"?"--active":""}`}>Business</div>
+                </div>
+                }
+                <form className="account__container-form" onSubmit={(event)=>{
+                    passState.passVal !==false &&
+                    modalState==="login"?loginUser(event):
+                    modalState==="register"?registerUser(event,accountType):authAdmin.sendPassReset(event)
+                }}>
+                    {modalState==="register" &&
+                        <>
+                        {accountType==="user"?
+                            <>
+                                <input type="text" className="account__container-form-field" id="firstNameRef" required placeholder="First Name"/>
+                                <input type="text" className="account__container-form-field" id="lastNameRef" required placeholder="Last Name"/>
+                            </>
+                        :
+                        <input type="text" className="account__container-form-field" id="companyRef" required placeholder="Company Name"/>
+                        }
+                        </>
+                    }
+                    <input type="email" className="account__container-form-field" id="emailRef" required placeholder="Email"/>
+                    {modalState!=="reset" &&
+                        <div className="account__container-form-passcontainer">
+                            <input type={passState.passVisible===false?"password":"text"} className="account__container-form-field"
+                                id="passRef" required placeholder="Password"
+                                onKeyUp={()=>{modalState!=="login" && passwordValidation()}}/>
+                            <img src={passState.passVisible===false?passHidIcon:passVisIcon} className="account__container-form-passvis" alt="password visibility toggle"
+                                onMouseDown={()=>{setPassState({...passState,passVisible: true})}}
+                                onMouseUp={()=>{setPassState({...passState,passVisible: false})}}
+                            />
+                        </div>
+                    }
+                    {modalState==="register" &&
+                        <div className="account__container-form-passcontainer">
+                            <input type={passState.passVisible===false?"password":"text"} className="account__container-form-field"
+                                id="confirmPassRef" required placeholder="Confirm Password"
+                                onKeyUp={()=> {passwordValidation()}}/>
+                            <img src={passState.passVisible===false?passHidIcon:passVisIcon} className="account__container-form-passvis" alt="password visibility toggle" 
+                                onMouseDown={()=>{setPassState({...passState,passVisible: true})}}
+                                onMouseUp={()=>{setPassState({...passState,passVisible: false})}}
+                            />
+                            {passState.passVal===false && <p className="account__container-form-passval">Sorry, your passwords don't match.</p>}
+                        </div>
+                    }
+                    <button type="submit" className="account__container-form-submit">
+                        {
+                            modalState==="login"?
+                                "Sign In":modalState==="register"?
+                                    "Sign Up":"Request Reset Email"
+                        }
+                    </button>
+                </form>
+                <div className="account__container-redirect">
+                    {modalState==="login" && 
+                    <p className="account__container-redirect-forgot" onClick={()=>{setModalState("reset")}}>Forget your password?</p>}
+                    <p className="account__container-redirect-register" 
+                        onClick={()=>{modalState==="login"?
+                        setModalState("register")
+                        :
+                        setModalState("login");
+                        setPassState({...passState,passVal:true});
+                        setAccountType("user")}}
+                    >
+                        {modalState==="login"?
+                        "Not a member yet?":modalState==="reset"?"Return to login":"Already a member?"}
+                    </p>
+                </div>
+                {modalState!=="reset" &&
+                <>
+                {accountType!=="business" &&
+                <>
+                    <div className="account__container-or">
+                        <hr/><span>OR</span><hr/>
+                    </div>
+                    <h4 className="account__container-alt">Continue with:</h4>
+                    <div className="account__container-providers">
+                        <img src={googleIcon} onClick={()=>{loginGoogle()}} alt="login with google button"/>
+                        <img src={linkedinIcon} onClick={()=>{loginGoogle()}} alt="login with linkedIn button"/>
+                    </div>
+                </>
+                }
+                </>
+                }
             </div>
-        )
-    }
+        </div>
+    )
 }
 
 export default SignInModal

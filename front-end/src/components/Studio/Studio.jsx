@@ -59,6 +59,7 @@ function Studio(props) {
   const getUserDevices = async () => {
     await navigator.mediaDevices.getUserMedia({audio: true, video: true});
     const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log(devices);
     const videoDevices = devices.filter(device => device.kind === 'videoinput');
     const micDevices = devices.filter(device => device.kind === 'audioinput');
     const vidOptions = videoDevices.map(videoDevice => {
